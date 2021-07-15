@@ -1,0 +1,85 @@
+name: Check
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  react-login:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 15
+      - run: npm install
+        working-directory: ./react-login
+      - run: npm run lint
+        working-directory: ./react-login
+      - run: npm run test -- --coverage
+        working-directory: ./react-login
+      - run: npm run build
+        working-directory: ./react-login
+        env:
+          PUBLIC_PATH: /${{ github.event.repository.name }}/react-login/result/
+      - uses: actions/upload-artifact@master
+        with:
+          name: react-login-coverage-report
+          path: ./react-login/coverage/lcov-report
+      - uses: actions/upload-artifact@master
+        with:
+          name: react-login-result
+          path: ./react-login/build
+  algorithms:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - run: npm install
+        working-directory: ./algorithms
+      - run: npm run lint
+        working-directory: ./algorithms
+      - run: npm run test -- --coverage
+        working-directory: ./algorithms
+      - uses: actions/upload-artifact@master
+        with:
+          name: algorithms-coverage-report
+          path: ./algorithms/coverage/lcov-report
+  report:
+    if: always()
+    needs:
+      - react-login
+      - algorithms
+    runs-on: ubuntu-latest
+    steps:
+      - uses: mshick/add-pr-comment@v1
+        with:
+          message: |
+            # ${{ fromJSON('[":heavy_check_mark:", ":x:"]')[needs.react-login.result != 'success'] }} React Login
+            * [Result](https://airfocusio.github.io/${{ github.event.repository.name }}/react-login/result/)
+            * [Coverage Report](https://airfocusio.github.io/${{ github.event.repository.name }}/react-login/coverage-report/)
+
+            # ${{ fromJSON('[":heavy_check_mark:", ":x:"]')[needs.algorithms.result != 'success'] }} Algorithms
+            * [Coverage Report](https://airfocusio.github.io/${{ github.event.repository.name }}/algorithms/coverage-report/)
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          allow-repeats: true
+      - run: |
+          mkdir gh-pages
+      - uses: actions/download-artifact@master
+        with:
+          name: react-login-coverage-report
+          path: gh-pages/react-login/coverage-report
+      - uses: actions/download-artifact@master
+        with:
+          name: react-login-result
+          path: gh-pages/react-login/result
+      - uses: actions/download-artifact@master
+        with:
+          name: algorithms-coverage-report
+          path: gh-pages/algorithms/coverage-report
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_dir: ./gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          force_orphan: true
