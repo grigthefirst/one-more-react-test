@@ -11,8 +11,8 @@ export const App: React.FC = () => {
     return (
       <HashRouter>
         <Switch>
-          <Route path="/" exact render={() => <PostListScreen />} />
-          <Route path="/post/:postId" exact render={() => <PostDetailsScreen />} />
+          <Route path="/" exact render={() => <PostListScreen accessToken={accessToken} />} />
+          <Route path="/post/:postId" exact render={() => <PostDetailsScreen accessToken={accessToken} />} />
         </Switch>
       </HashRouter>
     )
