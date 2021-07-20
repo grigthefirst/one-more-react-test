@@ -12,6 +12,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = props => {
   const [userName, setUserName] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async () => {
     if (!userName || !password) {
@@ -19,6 +20,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = props => {
       setError('Please fill username and password')
       return
     }
+    setLoading(true)
     let token
     try {
       token = await login(userName, password)
@@ -27,7 +29,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = props => {
       setError('Server error')
       return
     }
-
+    setLoading(false)
     if (token) {
       props.onAccessToken(token)
     } else {
@@ -56,13 +58,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = props => {
       <label className={labelStyle}>
         <b>Password:</b>
         <input
+          disabled={loading}
           className={inputStyle}
           type="password"
           value={password}
           onChange={event => setPassword(event.target.value)}
         />
       </label>
-      <input className={submitStyle} type="submit" value="Login" />
+      <input className={submitStyle} type="submit" value={loading ? 'Loading' : 'Login'} />
     </form>
   )
 }
