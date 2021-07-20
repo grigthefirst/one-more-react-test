@@ -19,7 +19,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = props => {
       setError('Please fill username and password')
       return
     }
-    const token = await login(userName, password)
+    let token
+    try {
+      token = await login(userName, password)
+    } catch (err) {
+      console.error(err)
+      setError('Server error')
+      return
+    }
+
     if (token) {
       props.onAccessToken(token)
     } else {

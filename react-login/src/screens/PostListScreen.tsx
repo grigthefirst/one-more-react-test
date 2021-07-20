@@ -1,9 +1,10 @@
 import { css } from 'emotion'
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
 
-import { listPosts, Post } from '../../api'
+import { listPosts } from '../../api'
 import { baseStyle, paddings } from '../commonStyles'
+import { useAsyncData } from '../hooks/useAsyncData'
 
 export interface PostListScreenProps {
   accessToken: string
@@ -11,31 +12,33 @@ export interface PostListScreenProps {
 
 export const PostListScreen: React.FC<PostListScreenProps> = props => {
   const { accessToken } = props
-  const [posts, setPosts] = useState<Post[]>([])
-  useEffect(() => {
-    if (accessToken) {
-      listPosts(accessToken)
-        .then(res => {
-          setPosts(res)
-        })
-        .catch(err => console.error(err))
+  const data = useAsyncData(async () => {
+    if (!accessToken) {
+      throw new Error('No access code')
     }
+    return await listPosts(accessToken)
   }, [accessToken])
 
   return (
-    <ul className={css([rootStyle, baseStyle])}>
-      {posts.map(post => (
-        <li className={liStyle} key={post.id}>
-          <Link to={`/post/${post.id}`} className={linkStyle}>
-            {post.title}{' '}
-            <span role="img" aria-label="like">
-              👍
-            </span>
-            {post.likes}
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <>
+      {data.type === 'loading' && <div>Loading...</div>}
+      {data.type === 'error' && <div>{data.error}</div>}
+      {data.type === 'success' && (
+        <ul className={css([rootStyle, baseStyle])}>
+          {data.value.map(post => (
+            <li className={liStyle} key={post.id}>
+              <Link to={`/post/${post.id}`} className={linkStyle}>
+                {post.title}{' '}
+                <span role="img" aria-label="like">
+                  👍
+                </span>
+                {post.likes}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   )
 }
 
