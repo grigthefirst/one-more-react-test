@@ -3,34 +3,18 @@ import { useEffect, useState } from 'react'
 export type AsyncDataResult<T> = { type: 'loading' } | { type: 'success'; value: T } | { type: 'error'; error: any }
 
 export function useAsyncData<T>(fn: () => Promise<T>, deps: React.DependencyList): AsyncDataResult<T> {
-  const [data, setData] = useState<T | null>(null)
-  const [error, setError] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<AsyncDataResult<T>>({ type: 'loading' })
   useEffect(() => {
-    setLoading(true)
+    if (result.type !== 'loading') {
+      setResult({ type: 'loading' })
+    }
     fn()
-      .then(result => {
-        setData(result)
-        setLoading(false)
+      .then(data => {
+        setResult({ type: 'success', value: data })
       })
       .catch(err => {
-        setError(err)
-        setLoading(false)
+        setResult({ type: 'error', error: err })
       })
   }, deps)
-  if (!loading && data !== null) {
-    return {
-      type: 'success',
-      value: data,
-    }
-  } else if (error) {
-    return {
-      type: 'error',
-      error: error,
-    }
-  } else {
-    return {
-      type: 'loading',
-    }
-  }
+  return result
 }
